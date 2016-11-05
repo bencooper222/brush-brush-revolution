@@ -34,13 +34,27 @@
 
 		<script type="text/javascript">
 
+			var video = document.getElementById('camera');
 			var canvas = document.getElementById('canvas');
 			var ctx = canvas.getContext('2d');
 			ctx.strokeStyle = 'yellow';
 
+			function flipHorizontal(domObj){
+				domObj.style.cssText = "-moz-transform: scale(-1, 1); \
+				-webkit-transform: scale(-1, 1); -o-transform: scale(-1, 1); \
+				transform: scale(-1, 1); filter: FlipH;";
+			}
+
+			flipHorizontal(video);
+			flipHorizontal(canvas);
+
+			function clearCanvas(){
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+			}
+
 			function drawRect(r){
 				ctx.beginPath();
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				clearCanvas();
 				ctx.rect(r.x, r.y, r.width, r.height);
 				ctx.stroke();
 			}
