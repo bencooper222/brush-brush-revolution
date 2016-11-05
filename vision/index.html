@@ -71,7 +71,6 @@
 			var task = null;
 
 			function clearCanvas(){
-				console.log(canvas.width, canvas.height);
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
 			}
 
@@ -107,6 +106,7 @@
 				ctx = canvas.getContext('2d');
 				ctx.strokeStyle = 'yellow';
 				task = tracking.track('#camera', colors, {camera: true});
+				task.stop(); //
 				video.removeEventListener('playing', adjustScreenSize, false);
 			}
 
@@ -172,7 +172,7 @@
 				}
 				else{
 					event.data.forEach(function(rect){
-						console.log(rect);
+						//console.log(rect);
 						drawRect(rect);
 						saveRect(rect);
 					});
@@ -181,6 +181,30 @@
 
 			task = tracking.track('#camera', colors, {camera: true});
 
+
+var MyTracker = function() {
+  MyTracker.base(this, 'constructor');
+}
+tracking.inherits(MyTracker, tracking.Tracker);
+
+
+MyTracker.prototype.track = function(pixels, width, height) {
+// Your code here
+
+this.emit('track', {
+  // Your results here
+});
+}
+
+tracking.MyTracker = MyTracker;
+
+var myTracker = new tracking.MyTracker();
+
+myTracker.on('track', function(event) {
+  //
+});
+
+tracking.track('#camera', myTracker);
 
 			window.onerror = function(event){
 				alert(event);
