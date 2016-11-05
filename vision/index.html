@@ -12,11 +12,23 @@
 		<!-- NEED FIREBASE LATER -->
 		<style>
 
+			div#screen {
+				width: 100vw;
+				height: 300px;
+				background: black;
+			}
+
 			video#camera, canvas#canvas {
-				 position: absolute;
+				position: absolute;
 			}
 
 			canvas#canvas {
+
+			}
+
+			textarea#output {
+				width: 400px;
+				height: 200px;
 			}
 
 		</style>
@@ -26,14 +38,19 @@
 
 		<h1>Vision</h1>
 
+		<button onclick="dumpData();">Dump Data</button>
 
 		<div id="screen">
-			<video id="camera" width="400" height="300" preload autoplay loop muted></video>
-			<canvas id="canvas" width="400" height="300"></canvas>
+			<video id="camera" width="400" height="300" preload autoplay="true" loop muted>Video</video>
+			<canvas id="canvas" width="400" height="300">Canvas</canvas>
 		</div>
+
+		<p>Logging Output</p>
+		<textarea id="output"></textarea>
 
 		<script type="text/javascript">
 
+			var output = document.getElementById('output');
 			var video = document.getElementById('camera');
 			var canvas = document.getElementById('canvas');
 			var ctx = canvas.getContext('2d');
@@ -61,6 +78,9 @@
 
 			// Blue Cap: rgb(50,86,231)
 			// Pink Arm: rgb(243,168,172)
+			// Green Point: rgb(133,197,179)
+			// rgb(26,119,107)
+			// rgb(242,142,147)
 
 			function colorValidatorFactory(r, g, b){
 				var validator = function(ri, gi, bi){
@@ -79,17 +99,45 @@
 
 			tracking.ColorTracker.registerColor('capBlue', colorValidatorFactory(50, 86, 231));
 			tracking.ColorTracker.registerColor('brushPink', colorValidatorFactory(243, 168, 172));
+			tracking.ColorTracker.registerColor('glove', colorValidatorFactory(255,147,151));
 
 			var colors = new tracking.ColorTracker(['capBlue']);
 
+			var saved = [];
+
+			function saveRect(rect){
+				saved.push({
+					timestamp: Date.now(),
+					x: rect.x,
+					y: rect.y,
+					width: rect.width,
+					height: rect.height
+				});
+			}
+
+			function dumpData(){
+				saved.sort(function(a, b){
+					return a.timestamp - b.timestamp;
+				});
+				var lines = saved.map(function(d){
+					return [d.timestamp, d.x, d.y, d.width, d.height].join(',');
+				});
+				var toPrint = ['timestamp', 'x', 'y', 'width', 'height'].join(',');
+				for(var i = 0; i < lines.length; i++){
+					toPrint += '\n' + lines[i];
+				}
+				output.value = toPrint;
+			}
+
 			colors.on('track', function(event){
 				if(event.data.length === 0){
-					console.log('No colors detected.');
+					//console.log('No colors detected.');
 				}
 				else{
 					event.data.forEach(function(rect){
 						//console.log(rect);
 						drawRect(rect);
+						saveRect(rect);
 					});
 				}
 			});
@@ -98,6 +146,10 @@
 			
 
 			console.log("LOADED MAIN");
+
+			window.onerror = function(event){
+				alert(event);
+			}
 
 		</script>
 		
