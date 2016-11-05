@@ -14,17 +14,27 @@
 		<style>
 
 			div#screen {
-				width: 100vw;
-				height: 300px;
-				background: black;
+				position: absolute;
+				top: 0px;
+				left: 50%;
+				z-index: 2;
 			}
 
 			video#camera, canvas#canvas {
 				position: absolute;
+				left: 0;
+				top: 0;
+			}
+
+			video#camera {
+				z-index: -200;
+				border: 10px solid red;
 			}
 
 			canvas#canvas {
-
+				z-index: -100;
+				/*background: rgba(20, 20, 20, 0.5);*/
+				border: 2px solid blue;
 			}
 
 			textarea#output {
@@ -52,10 +62,26 @@
 		<script type="text/javascript">
 
 			var output = document.getElementById('output');
+			var screenDiv = document.getElementById('screen');
 			var video = document.getElementById('camera');
 			var canvas = document.getElementById('canvas');
 			var ctx = canvas.getContext('2d');
 			ctx.strokeStyle = 'yellow';
+
+			var task = null;
+
+			function clearCanvas(){
+				console.log(canvas.width, canvas.height);
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+			}
+
+			function drawRect(r){
+				ctx.beginPath();
+				clearCanvas();
+				ctx.rect(r.x, r.y, r.width, r.height);
+				ctx.stroke();
+				ctx.closePath();
+			}
 
 			function flipHorizontal(domObj){
 				domObj.style.cssText = "-moz-transform: scale(-1, 1); \
@@ -66,16 +92,25 @@
 			flipHorizontal(video);
 			flipHorizontal(canvas);
 
-			function clearCanvas(){
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
+			var adjustScreenSize = function(){
+				task.stop();
+				var h = video.videoHeight;
+				var w = video.videoWidth;
+				video.width = w;
+				video.height = h;
+				canvas.width = w;
+				canvas.height = h;
+				screenDiv.style.width = w + 'px';
+				screenDiv.style.height = h + 'px';
+				screenDiv.style.marginLeft = (w/-2) + 'px';
+				clearCanvas();
+				ctx = canvas.getContext('2d');
+				ctx.strokeStyle = 'yellow';
+				task = tracking.track('#camera', colors, {camera: true});
+				video.removeEventListener('playing', adjustScreenSize, false);
 			}
 
-			function drawRect(r){
-				ctx.beginPath();
-				clearCanvas();
-				ctx.rect(r.x, r.y, r.width, r.height);
-				ctx.stroke();
-			}
+			video.addEventListener('playing', adjustScreenSize, false);
 
 			// Blue Cap: rgb(50,86,231)
 			// Pink Arm: rgb(243,168,172)
@@ -137,14 +172,14 @@
 				}
 				else{
 					event.data.forEach(function(rect){
-						//console.log(rect);
+						console.log(rect);
 						drawRect(rect);
 						saveRect(rect);
 					});
 				}
 			});
 
-			tracking.track('#camera', colors, {camera: true});
+			task = tracking.track('#camera', colors, {camera: true});
 
 
 			window.onerror = function(event){
