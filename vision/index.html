@@ -83,11 +83,12 @@
 			// rgb(26,119,107)
 			// rgb(242,142,147)
 
-			function colorValidatorFactory(r, g, b){
+			function colorValidatorFactory(r, g, b, tolerance){
+				var tol = tolerance || 50;
 				var validator = function(ri, gi, bi){
-					var rRange = Math.abs(r - ri) < 50;
-					var gRange = Math.abs(g - gi) < 50;
-					var bRange = Math.abs(b - bi) < 50;
+					var rRange = Math.abs(r - ri) < tol;
+					var gRange = Math.abs(g - gi) < tol;
+					var bRange = Math.abs(b - bi) < tol;
 					if(rRange && gRange && bRange){
 						return true;
 					}
@@ -98,9 +99,7 @@
 				return validator;
 			}
 
-			tracking.ColorTracker.registerColor('capBlue', colorValidatorFactory(50, 86, 231));
-			tracking.ColorTracker.registerColor('brushPink', colorValidatorFactory(243, 168, 172));
-			tracking.ColorTracker.registerColor('glove', colorValidatorFactory(255,147,151));
+			tracking.ColorTracker.registerColor('capBlue', colorValidatorFactory(50, 86, 231, 65));
 
 			var colors = new tracking.ColorTracker(['capBlue']);
 
@@ -146,9 +145,7 @@
 			});
 
 			tracking.track('#camera', colors, {camera: true});
-			
 
-			console.log("LOADED MAIN");
 
 			window.onerror = function(event){
 				alert(event);
