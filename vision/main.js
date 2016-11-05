@@ -118,8 +118,10 @@ function dumpData(){
 colors.on('track', function(event){
 	if(event.data.length === 0){
 		//console.log('No colors detected.');
+		//canvas.style.background = 'rgba(0,0,0,0.25)';
 	}
 	else{
+		//canvas.style.background = 'rgba(0,0,0,0.00)';
 		event.data.forEach(function(rect){
 			rect.timestamp = Date.now();
 			//console.log(rect);

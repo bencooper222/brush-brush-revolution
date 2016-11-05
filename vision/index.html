@@ -13,6 +13,11 @@
 		<!-- NEED FIREBASE LATER -->
 		<style>
 
+			html {
+				background: rgba(199,71,97,1);
+				overflow: hidden;
+			}
+
 			div#screen {
 				position: absolute;
 				top: 0px;
@@ -41,9 +46,20 @@
 				position: absolute;
 			}
 
-			button {
+			button#dump {
 				position: absolute;
+				top: 10px;
+				left: 10px;
 				z-index: 20;
+				background: rgba(199,71,97,1);
+				width: 50px;
+				height: 50px;
+				border-radius: 25px;
+				border: 5px solid rgba(108,48,73,1);
+			}
+
+			button#dump:hover {
+				background: rgba(108,48,73,1);
 			}
 
 		</style>
@@ -56,7 +72,7 @@
 			<canvas id="canvas" width="400" height="300">Canvas</canvas>
 		</div>
 
-		<button onclick="dumpData();">Dump Data</button>
+		<button id="dump" onclick="dumpData();"></button>
 		<textarea id="output"></textarea>
 
 		<script type="text/javascript" src="main.js"></script>
