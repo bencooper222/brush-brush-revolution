@@ -8,10 +8,16 @@
 		<!-- IMPORTED SCRIPTS -->
 		<!-- NEED GOOGLE FONTS LATER -->
 		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script type="text/javascript" src="build/tracking-min.js"></script>
 		<!-- NEED FIREBASE LATER -->
 		<style>
 
+			video#camera, canvas#canvas {
+				 position: absolute;
+			}
 
+			canvas#canvas {
+			}
 
 		</style>
 	</head>
@@ -20,8 +26,61 @@
 
 		<h1>Vision</h1>
 
+
+		<div id="screen">
+			<video id="camera" width="400" height="300" preload autoplay loop muted></video>
+			<canvas id="canvas" width="400" height="300"></canvas>
+		</div>
+
 		<script type="text/javascript">
 
+			var canvas = document.getElementById('canvas');
+			var ctx = canvas.getContext('2d');
+			ctx.strokeStyle = 'yellow';
+
+			function drawRect(r){
+				ctx.beginPath();
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				ctx.rect(r.x, r.y, r.width, r.height);
+				ctx.stroke();
+			}
+
+			// Blue Cap: rgb(50,86,231)
+			// Pink Arm: rgb(243,168,172)
+
+			function colorValidatorFactory(r, g, b){
+				var validator = function(ri, gi, bi){
+					var rRange = Math.abs(r - ri) < 50;
+					var gRange = Math.abs(g - gi) < 50;
+					var bRange = Math.abs(b - bi) < 50;
+					if(rRange && gRange && bRange){
+						return true;
+					}
+					else{
+						return false;
+					}
+				}
+				return validator;
+			}
+
+			tracking.ColorTracker.registerColor('capBlue', colorValidatorFactory(50, 86, 231));
+			tracking.ColorTracker.registerColor('brushPink', colorValidatorFactory(243, 168, 172));
+
+			var colors = new tracking.ColorTracker(['capBlue']);
+
+			colors.on('track', function(event){
+				if(event.data.length === 0){
+					console.log('No colors detected.');
+				}
+				else{
+					event.data.forEach(function(rect){
+						//console.log(rect);
+						drawRect(rect);
+					});
+				}
+			});
+
+			tracking.track('#camera', colors, {camera: true});
 			
 
 			console.log("LOADED MAIN");
