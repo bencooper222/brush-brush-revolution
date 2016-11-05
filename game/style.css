@@ -1,3 +1,19 @@
-body {
-    text-align: center;
+.left {
+    height: 100px;
+    width: 100px;
+    float: left;
+}
+
+.right {
+    height: 100px;
+    width: 100px;
+    float: right;
+}
+
+.down {
+    margin-top: 45%;
+}
+
+#botContainer {
+    height: fit-content;
 }
