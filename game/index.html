@@ -13,7 +13,7 @@
     <script>
         enchant(); // initialize
         var game = new Core(320, 320);
-        game.preload('chara1.png', 'icon0.png'); // preload image
+        game.preload('visual-assets/chara1.png', 'visual-assets/icon0.png'); // preload image
         game.fps = 20;
 
         game.onload = function() {
@@ -21,7 +21,7 @@
             var Player = enchant.Class.create(enchant.Sprite, {
                 initialize: function() {
                     enchant.Sprite.call(this, 32, 32);
-                    this.image = game.assets['chara1.png'];
+                    this.image = game.assets['visual-assets/chara1.png'];
                     this.frame = 5; // set image data
                     game.rootScene.addChild(this); // add to canvas
                 }
@@ -31,7 +31,7 @@
             var Apple = enchant.Class.create(enchant.Sprite, {
                 initialize: function() {
                     enchant.Sprite.call(this, 16, 16);
-                    this.image = game.assets['icon0.png']; // set image
+                    this.image = game.assets['visual-assets/icon0.png']; // set image
                     this.moveTo(16, player.y + 8); // move to the position
                     this.tl.moveBy(320, 0, 30); // set movement
                     this.frame = 15; // set image data
@@ -43,7 +43,7 @@
             var Enemy = enchant.Class.create(enchant.Sprite, {
                 initialize: function() {
                     enchant.Sprite.call(this, 32, 32);
-                    this.image = game.assets['chara1.png']; // set image
+                    this.image = game.assets['visual-assets/chara1.png']; // set image
                     this.moveTo(320, Math.floor(Math.random() * 320)); // set position
                     this.scaleX = -1;
                     this.tl.moveBy(-360, 0, 160); // set movement
