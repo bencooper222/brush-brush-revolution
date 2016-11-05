@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<title>Computer Vision</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" type="text/css" href="style/reset.css">
 		<link rel="stylesheet" type="text/css" href="style/main.css">
 		<!--<link rel="icon" type="img/png" href="style/favicon.png" style="width:30px;">-->
@@ -119,8 +120,10 @@
 				saved.sort(function(a, b){
 					return a.timestamp - b.timestamp;
 				});
+				var start = saved[0].timestamp;
 				var lines = saved.map(function(d){
-					return [d.timestamp, d.x, d.y, d.width, d.height].join(',');
+					var time = d.timestamp - start;
+					return [time, d.x, d.y, d.width, d.height].join(',');
 				});
 				var toPrint = ['timestamp', 'x', 'y', 'width', 'height'].join(',');
 				for(var i = 0; i < lines.length; i++){
