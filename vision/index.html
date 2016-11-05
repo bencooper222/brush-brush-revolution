@@ -28,18 +28,22 @@
 
 			video#camera {
 				z-index: -200;
-				border: 10px solid red;
 			}
 
 			canvas#canvas {
 				z-index: -100;
 				/*background: rgba(20, 20, 20, 0.5);*/
-				border: 2px solid blue;
 			}
 
 			textarea#output {
 				width: 400px;
 				height: 200px;
+				position: absolute;
+			}
+
+			button {
+				position: absolute;
+				z-index: 20;
 			}
 
 		</style>
@@ -47,168 +51,18 @@
 
 	<body>
 
-		<h1>Vision</h1>
-
-		<button onclick="dumpData();">Dump Data</button>
-
 		<div id="screen">
 			<video id="camera" width="400" height="300" preload autoplay="true" loop muted>Video</video>
 			<canvas id="canvas" width="400" height="300">Canvas</canvas>
 		</div>
 
-		<p>Logging Output</p>
+		<button onclick="dumpData();">Dump Data</button>
 		<textarea id="output"></textarea>
+
+		<script type="text/javascript" src="main.js"></script>
 
 		<script type="text/javascript">
 
-			var output = document.getElementById('output');
-			var screenDiv = document.getElementById('screen');
-			var video = document.getElementById('camera');
-			var canvas = document.getElementById('canvas');
-			var ctx = canvas.getContext('2d');
-			ctx.strokeStyle = 'yellow';
-
-			var task = null;
-
-			function clearCanvas(){
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
-			}
-
-			function drawRect(r){
-				ctx.beginPath();
-				clearCanvas();
-				ctx.rect(r.x, r.y, r.width, r.height);
-				ctx.stroke();
-				ctx.closePath();
-			}
-
-			function flipHorizontal(domObj){
-				domObj.style.cssText = "-moz-transform: scale(-1, 1); \
-				-webkit-transform: scale(-1, 1); -o-transform: scale(-1, 1); \
-				transform: scale(-1, 1); filter: FlipH;";
-			}
-
-			flipHorizontal(video);
-			flipHorizontal(canvas);
-
-			var adjustScreenSize = function(){
-				task.stop();
-				var h = video.videoHeight;
-				var w = video.videoWidth;
-				video.width = w;
-				video.height = h;
-				canvas.width = w;
-				canvas.height = h;
-				screenDiv.style.width = w + 'px';
-				screenDiv.style.height = h + 'px';
-				screenDiv.style.marginLeft = (w/-2) + 'px';
-				clearCanvas();
-				ctx = canvas.getContext('2d');
-				ctx.strokeStyle = 'yellow';
-				task = tracking.track('#camera', colors, {camera: true});
-				task.stop(); //
-				video.removeEventListener('playing', adjustScreenSize, false);
-			}
-
-			video.addEventListener('playing', adjustScreenSize, false);
-
-			// Blue Cap: rgb(50,86,231)
-			// Pink Arm: rgb(243,168,172)
-			// Green Point: rgb(133,197,179)
-			// rgb(26,119,107)
-			// rgb(242,142,147)
-
-			function colorValidatorFactory(r, g, b, tolerance){
-				var tol = tolerance || 50;
-				var validator = function(ri, gi, bi){
-					var rRange = Math.abs(r - ri) < tol;
-					var gRange = Math.abs(g - gi) < tol;
-					var bRange = Math.abs(b - bi) < tol;
-					if(rRange && gRange && bRange){
-						return true;
-					}
-					else{
-						return false;
-					}
-				}
-				return validator;
-			}
-
-			tracking.ColorTracker.registerColor('capBlue', colorValidatorFactory(50, 86, 231, 65));
-
-			var colors = new tracking.ColorTracker(['capBlue']);
-
-			var saved = [];
-
-			function saveRect(rect){
-				saved.push({
-					timestamp: Date.now(),
-					x: rect.x,
-					y: rect.y,
-					width: rect.width,
-					height: rect.height
-				});
-			}
-
-			function dumpData(){
-				saved.sort(function(a, b){
-					return a.timestamp - b.timestamp;
-				});
-				var start = saved[0].timestamp;
-				var lines = saved.map(function(d){
-					var time = d.timestamp - start;
-					return [time, d.x, d.y, d.width, d.height].join(',');
-				});
-				var toPrint = ['timestamp', 'x', 'y', 'width', 'height'].join(',');
-				for(var i = 0; i < lines.length; i++){
-					toPrint += '\n' + lines[i];
-				}
-				output.value = toPrint;
-			}
-
-			colors.on('track', function(event){
-				if(event.data.length === 0){
-					//console.log('No colors detected.');
-				}
-				else{
-					event.data.forEach(function(rect){
-						//console.log(rect);
-						drawRect(rect);
-						saveRect(rect);
-					});
-				}
-			});
-
-			task = tracking.track('#camera', colors, {camera: true});
-
-
-var MyTracker = function() {
-  MyTracker.base(this, 'constructor');
-}
-tracking.inherits(MyTracker, tracking.Tracker);
-
-
-MyTracker.prototype.track = function(pixels, width, height) {
-// Your code here
-
-this.emit('track', {
-  // Your results here
-});
-}
-
-tracking.MyTracker = MyTracker;
-
-var myTracker = new tracking.MyTracker();
-
-myTracker.on('track', function(event) {
-  //
-});
-
-tracking.track('#camera', myTracker);
-
-			window.onerror = function(event){
-				alert(event);
-			}
 
 		</script>
 		
