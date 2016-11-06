@@ -99,7 +99,7 @@ window.console.color = function(c, text){
 
 function shadeFilter(c, opts){
 	var opts = opts || {};
-	var wT = opts.white || 25;
+	var wT = opts.white || 5;
 	var bT = opts.black || 5;
 	var whiteDiff = colorDiff(c, [255, 255, 255]);
 	var blackDiff = colorDiff(c, [0, 0, 0]);

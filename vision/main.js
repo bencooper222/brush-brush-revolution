@@ -221,15 +221,16 @@ function launchBrushTracker(){
 			}
 
 			var modeRGB = [mode(rgbStack[0]), mode(rgbStack[1]), mode(rgbStack[2])];
-			var modePix = mode(rgbStr);
-
+			
+			//var modePix = mode(rgbStr);
 			//console.log('%c Average Color', 'background: rgba(' + modePix + ',1)');
 			//var finalStr = 'rgba(' + modeRGB + ',1)';
+			
 			var finalStr = cArrToStr(modeRGB);
 			
-			console.log(pixels.length);
+			/*console.log(pixels.length);
 			console.log('Integrate from y = ' + cbtr.y + ' to ' + y + ': Delta(y) = ' + (y - cbtr.y));
-			console.log('Integrate from x = ' + cbtr.x + ' to ' + x + ': Delta(x) = ' + (x - cbtr.x));
+			console.log('Integrate from x = ' + cbtr.x + ' to ' + x + ': Delta(x) = ' + (x - cbtr.x));*/
 			console.color(finalStr, 'Color Integral')
 
 
@@ -269,6 +270,7 @@ function launchBrushTracker(){
 
 	var lastColor = false;
 	var cStream = [];
+	var netDiff = 0;
 	var cMap = {};
 
 	brushTracker.on('track', function(event){
@@ -280,9 +282,25 @@ function launchBrushTracker(){
 			console.log('ROUNDS: %c ' + rounded, 'background:' + rounded);*/
 			var rgbKey = cStrToArr(rounded).join('-');
 			cMap[rgbKey] = cMap[rgbKey] + 1 || 1;
-			if(cMap[rgbKey] > 3){
+			/*if(cMap[rgbKey] > 3){*/
 				console.log('ROUNDS: %c ' + rounded, 'background:' + rounded);
+			//}
+
+			if(lastColor){
+				var pDiff = colorDiff(cStrToArr(rounded), cStrToArr(lastColor));
+					netDiff += pDiff;
+				if(pDiff < 15 && cStream.length < 4){
+					cStream.push(rounded);
+				}
+				else{
+					netDiff = 0;
+					cStream = [rounded];
+				}
+				if(cStream.length > 3){
+					chooseColor();
+				}
 			}
+			lastColor = rounded;
 			/*cStream.push(event);
 			if(cStream.length > 6){
 				var cands = cStream.slice(cStream.length-6, cStream.length-1);
