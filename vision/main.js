@@ -91,7 +91,7 @@ function endCameraFeed(){
 
 function dumpData(){
 	if(saved.length > 0){
-		printData();
+		//printData();
 		saved.sort(function(a, b){
 			return a.timestamp - b.timestamp;
 		});
@@ -106,9 +106,9 @@ function dumpData(){
 				height: d.height
 			};
 		});
-		/*var brush_coords = calculateBrushCoordinates(raw_coords);
+		var brush_coords = calculateBrushCoordinates(raw_coords);
 		console.log(brush_coords);
-		console.log('as it were');*/
+		console.log('as it were');
 	}
 }
 
@@ -140,15 +140,21 @@ function launchColorTracker(r, g, b, t){
 
 var colorButton = document.getElementById('color');
 
+colorButton.addEventListener('click', chooseColor);
+
 function chooseColor(){
 	var trackerColor = colorButton.style.background;
 	console.log(trackerColor);
 	task.stop();
-	document.body.style.background = trackerColor;
+	//document.body.style.background = trackerColor;
 	colorButton.style.background = trackerColor;
+	colorButton.innerText = 'Calibrated To: ' + trackerColor;
+	colorButton.style.height = '30px';
+	colorButton.style.lineHeight = '30px';
 	clearCanvas();
 	var c = trackerColor.substr(4).replace(')', '').split(', ');
-	launchColorTracker(c[0], c[1], c[2], 20);
+	launchColorTracker(c[0], c[1], c[2], 30);
+	colorButton.removeEventListener('click', chooseColor);
 }
 
 function launchBrushTracker(){
@@ -209,7 +215,7 @@ function launchBrushTracker(){
 
 			//console.log('%c Average Color', 'background: rgba(' + modePix + ',1)');
 			var finalStr = 'rgba(' + modePix + ',1)';
-			document.body.style.background = finalStr;
+			//document.body.style.background = finalStr;
 			colorButton.style.background = finalStr;
 			drawRect(cbtr, finalStr);
 
