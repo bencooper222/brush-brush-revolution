@@ -52,11 +52,21 @@ var COLOR_DIFF_MAX = Math.sqrt(3 * Math.pow(255, 2));
 
 function colorDiff(c1, c2){
 	var dR = c2[0] - c1[0];
-	console.log(c2[0], c1[0]);
+	/*console.log(c2[0], c1[0]);
 	console.log(c2[1], c1[1]);
-	console.log(c2[2], c1[2]);
+	console.log(c2[2], c1[2]);*/
 	var dG = c2[1] - c1[1];
 	var dB = c2[2] - c1[2];
 	var d = Math.sqrt(Math.pow(dR, 2) + Math.pow(dG, 2) + Math.pow(dB, 2));
 	return d;
+}
+
+function cStrToArr(rgbStr){
+	var str = rgbStr + '';
+	if(str.indexOf('a') > -1){
+		return str.substr(5).replace(')', '').split(',').map(function(n){return parseInt(n, 10);});
+	}
+	else{
+		return str.substr(4).replace(')', '').split(',').map(function(n){return parseInt(n, 10);});
+	}
 }

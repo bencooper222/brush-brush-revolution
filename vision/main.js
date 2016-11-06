@@ -147,7 +147,7 @@ function chooseColor(){
 	document.body.style.background = trackerColor;
 	colorButton.style.background = trackerColor;
 	clearCanvas();
-	var c = trackerColor.substr(4).replace(')', '').split(', ');
+	var c = cStrToArr(trackerColor);
 	launchColorTracker(c[0], c[1], c[2], 20);
 }
 
@@ -176,6 +176,9 @@ function launchBrushTracker(){
 		}
 		return highest.value;
 	}
+
+	var LAST_COLOR = false;
+	var SIM_SEQ = 0;
 
 	BrushTracker.prototype.track = function(raw, width, height){
 		if(SCALED){
@@ -213,20 +216,39 @@ function launchBrushTracker(){
 			colorButton.style.background = finalStr;
 			drawRect(cbtr, finalStr);
 
-			//SCALED = false;
-		}
+			if(LAST_COLOR){
+				var lastStreak = false;
+				var d = colorDiff(cStrToArr(finalStr), cStrToArr(LAST_COLOR));
+				if(d === 0){
+					SIM_SEQ++;
+				}
+				else{
+					lastStreak = SIM_SEQ;
+					SIM_SEQ = 0;
+				}
+				this.emit('track', {
+					color: finalStr,
+					last: LAST_COLOR,
+					diff: d,
+					didx: d / COLOR_DIFF_MAX,
+					current_streak: SIM_SEQ,
+					last_streak: lastStreak
+				});
+			}
 
-		/*this.emit('track', {
-			// Your results here
-		});*/
+			LAST_COLOR = finalStr;
+		}
 	}
 
 	tracking.BrushTracker = BrushTracker;
 
 	var brushTracker = new tracking.BrushTracker();
 
+	var lastColor = false;
+
 	brushTracker.on('track', function(event){
-		//
+		console.log('%c' + event.diff.toFixed(5), 'background:' + event.color + ';color:white;');
+		console.log(event);
 	});
 
 	task = tracking.track('#camera', brushTracker, {camera: true});
