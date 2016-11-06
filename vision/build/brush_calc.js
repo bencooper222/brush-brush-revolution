@@ -160,5 +160,101 @@ function calculateBrushCoordinates (raw_coordinates) {
     return final_coordinates; 
 }
 
+function normalize_distributions(coordinates) {
+    var origin = coordinates.slice(5, -1); 
+    var normalizer = [origin[0].x, origin[0].y];
 
+    origin[0].t = 0; 
+    for (i = 0; i < origin.length; i++) {
+        origin[i].x -= normalizer[0]; 
+        origin[i].y -= normalizer[1]; 
+    } 
 
+    return origin 
+}
+
+function find_quadrant(obj) { 
+    var normalized = normalize_distributions([obj]); 
+    var quadrant; 
+    if (normalized[0].x < 0 && normalized[0].y < 0) {
+        quadrant = "top left"; 
+    }
+    else if (normalized[0].x > 0 && normalized[0].y > 0) {
+        quadrant = "top right"; 
+    }
+    else if (normalized[0].x < 0 && normalized[0].y < 0) {
+        quadrant = "bottom left"; 
+    }
+    else {
+        quadrant = "bottom right";
+    }
+
+    return quadrant 
+}
+
+function ideal_time_index_score(coordinates) {
+    delta = coordinates[-1].t0 - coordinates[0].t0; 
+    scalar = delta / 12000.0; 
+    return parseInt(scalar * 10.0); 
+}
+
+function ideal_angle_index_score(coordinates) {
+    var _x = []; 
+    var _y = []; 
+    var nj = require('num.js'); 
+    for (i = 0; i < coordinates.length; i++) {
+        _x.push(coordinates[i][0]); 
+        _y.pus(coordinates[i][1]);
+    }
+    
+    var x = nj.array(_x);
+	var y = nj.array(_y);
+ 
+	var A = nj.vstack([x, np.ones(len(x))]).T
+
+	m, c = nj.linalg.lstsq(A, y)[0]
+
+	theta = parseInt(Math.degrees(arctan(m))) % 90;
+
+	error = abs(parseFloat(theta - 45) / 45.0);
+
+	return parseInt(10 - (10*error))
+}
+
+function ideal_quadrant_index_score(coordinates) {
+    var normalized_distribution = normalize_distributions(coordinates); 
+    var q1 = []; 
+    var q2 = []; 
+    var q3 = []; 
+    var q4 = []; 
+
+    for (i = 0; i < normalized_distribution.length; i++) {
+        if (normalized_distribution[i].x < 0 && normalized_distribution[i].y < 0) {
+            q1.push(normalized_distribution[i]); 
+        }
+        else if (normalized_distribution[i].x > 0 && normalized_distribution[i].y > 0) {
+            q2.push(normalized_distribution[i]); 
+        }
+        else if (normalized_distribution[i].x < 0 && normalized_distribution[i].y < 0) {
+            q3.push(normalized_distribution[i]); 
+        }
+        else {
+            q4.push(normalized_distribution[i]);
+        }   
+    }
+
+	var s1 = 10 - (10 * abs((((Math.max(q1) - Math.min(q1)) % 30) - 30) / 30));
+	var s2 = 10 - (10 * abs((((Math.max(q2) - Math.min(q2)) % 30) - 30) / 30));
+	var s3 = 10 - (10 * abs((((Math.max(q3) - Math.min(q3)) % 30) - 30) / 30));
+	var s4 = 10 - (10 * abs((((Math.max(q4) - Math.min(q4)) % 30) - 30) / 30));
+
+	return parseInt((s1+s2+s3+s4)/4)
+}
+
+function idealBehaviorScore(coordinates) {
+    var time_index = ideal_time_index_score(coordinates); 
+    var angle_index = ideal_angle_index_score(coordinates); 
+    var quadrant_index = ideal_quadrant_index_score(coordinates); 
+
+    return parseInt((time_index + angle_index + quadrant_index) / 3)
+}
