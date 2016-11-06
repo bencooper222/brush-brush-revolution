@@ -1,13 +1,13 @@
-BRUSH_LENGTH = 100; 
-MIN_THRESHOLD = 5;
-MAX_THRESHOLD = 25;
-K = 0.3; 
+var BRUSH_LENGTH = 100; 
+var MIN_THRESHOLD = 5;
+var MAX_THRESHOLD = 25;
+var K = 0.3; 
 
 Array.prototype.diff = function(a) {
     return this.filter(function(i) {return a.indexOf(i) < 0;});
 };
 
-function computeDeltaZ(w0, h0, w1, h1) {
+function computeDeltaZ(w0, h0_0, w1, h1_0) {
     /*
     Computation of delta z is determined through: 
 	extension of the square to make dank af triangles
@@ -16,16 +16,16 @@ function computeDeltaZ(w0, h0, w1, h1) {
     */
     
     // calculate hypotenuse of the first triangle
-	h0 = math.sqrt((BRUSH_WIDTH + w0) ** 2 + (h0) ** 2)
+	var h0 = Math.sqrt((BRUSH_LENGTH + w0) ** 2 + (h0_0) ** 2);
 	// calculate the hypotenuse of the second triangle
-	h1 = math.sqrt((BRUSH_WIDTH + w1) ** 2 + (h1) ** 2) 
+	var h1 = Math.sqrt((BRUSH_LENGTH + w1) ** 2 + (h1_0) ** 2);
 
 	// Assuming this is a right triangle, probably wrong boize 
 	if (h1 < h0) {
-		delta_z = -math.sqrt(abs(h1 ** 2 - h0 ** 2))
+		delta_z = -1 * Math.sqrt(Math.abs(h1 ** 2 - h0 ** 2))
     }
 	else { 
-		delta_z = math.sqrt(abs(h1 ** 2 - h0 ** 2))
+		delta_z = Math.sqrt(Math.abs(h1 ** 2 - h0 ** 2))
     }
 
 	return delta_z
@@ -36,7 +36,7 @@ function computeTimeDelta(t0, t1) {
 }
 
 function computeVelocity(x0, y0, z0, x, y, z, t) {
-    return (math.sqrt(x**2 + y**2 + z**2) - math.sqrt(x0**2 + y0**2 + z0**2)) / t; 
+    return (Math.sqrt(x**2 + y**2 + z**2) - Math.sqrt(x0**2 + y0**2 + z0**2)) / t; 
 }
 
 function computeAcceleration(v0, v, t) {
@@ -44,35 +44,58 @@ function computeAcceleration(v0, v, t) {
 }
 
 function computeDeltaPos(coordinates) {
-    pos = []; 
-    for (obj in coordinates) {
-        pos.push(math.sqrt(obj.x**2 + obj.y**2 + obj.z**2)); 
-    }
+    var pos = [];
+    coordinates.map(function(obj){
+        pos.push(Math.sqrt(obj.x**2 + obj.y**2 + obj.z**2));
+    });
 
     return pos; 
 }
 
+/*function avgWithNextPoints(list, idx, pts){
+    var points = pts || 3;
+    if(list.length - points >= idx){
+        var sum = 0;
+        for(var i = idx; i < idx + points; i++){
+            sum += list[i];
+        }
+        var avg = sum / points;
+        return avg;
+    }
+    else{
+        console.error('Out of bounds exception you piece of shit.');
+        return false;
+    }
+}*/
+
 function computeDeltaPosPeriod(delta_pos) {
-    for (i = 0; i < delta_pos.length; i++) {
-        if (delta_pos[i] + delta_pos[i+1] + delta_pos[i+2] / 3 > MIN_THRESHOLD && (delta_pos[i] + delta_pos[i+1] + delta_pos[i+2] / 3 < MAX_THRESHOLD)) {
-            period += 1; 
+    var period = 0;
+    for (i = 0; i < delta_pos.length - 2; i++) {
+        var avg3 = (delta_pos[i] + delta_pos[i+1] + delta_pos[i+2]) / 3;
+        console.log(avg3);
+        if (avg3 > MIN_THRESHOLD && avg3 < MAX_THRESHOLD) {
+            period += 1;
+        }
+        else{
+
         }
     }
-
     return period; 
 }
 
 function computeRigor(coordinates) {
-    delta = computeDeltaPos(coordinates); 
-    period = computeDeltaPosPeriod(delta); 
-    delta_r = []; 
+    var delta = computeDeltaPos(coordinates); 
+    var period = computeDeltaPosPeriod(delta); 
+    var delta_r = []; 
+    var rigor;
 
     for (i = 0; i < coordinates.length; i++) {
         if (coordinates[i].t == 0) {
-            var rigor = 0; 
+            rigor = 0;
         }
         else {
-            var rigor = abs(K * delta[i] * period * coordinates[i].v); 
+            rigor = Math.abs(K * delta[i] * period * coordinates[i].v);
+            console.log(K, delta[i], period, coordinates[i].v);
         }
         delta_r.push(rigor); 
     }
@@ -87,10 +110,10 @@ function adjustForDuplicates(raw_coordinates) {
     * then removing the first instance of the duplicate. 
     */ 
 
-    duplicates = []; 
-    for (var i = 0; i < raw_coordinates.length; i++) {
+    var duplicates = []; 
+    for (var i = 1; i < raw_coordinates.length; i++) {
         if (raw_coordinates[i].timestamp == raw_coordinates[i-1].timestamp) {
-            duplicates.add(raw_coordinates[i - 1]); 
+            duplicates.push(raw_coordinates[i - 1]); 
             raw_coordinates[i].timestamp = (raw_coordinates[i].timestamp + raw_coordinates[i-1].timestamp) / 2;
             raw_coordinates[i].x = (raw_coordinates[i].x + raw_coordinates[i-1].x) / 2;
             raw_coordinates[i].y = (raw_coordinates[i].y + raw_coordinates[i-1].y) / 2;
@@ -109,9 +132,9 @@ function calculateBrushCoordinates (raw_coordinates) {
 	 time difference
     */ 
 
-    adjusted_coordinates = adjustForDuplicates(raw_coordinates); 
+    var adjusted_coordinates = adjustForDuplicates(raw_coordinates); 
     
-    final_coordinates = []; 
+    var final_coordinates = []; 
 
     for (var i = 0; i < adjusted_coordinates.length; i++) {
         if (i == 0) {
@@ -152,7 +175,7 @@ function calculateBrushCoordinates (raw_coordinates) {
         }); 
     }
 
-    rigor_index = computeRigor(final_coordinates); 
+    var rigor_index = computeRigor(final_coordinates); 
     for (i = 0; i < rigor_index.length; i++) {
         final_coordinates[i].r = rigor_index[i]; 
     }

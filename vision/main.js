@@ -98,7 +98,7 @@ function saveRect(rect){
 	});
 }
 
-function dumpData(){
+function printData(){
 	saved.sort(function(a, b){
 		return a.timestamp - b.timestamp;
 	});
@@ -114,6 +114,27 @@ function dumpData(){
 	}
 	output.value = toPrint;
 	screenDiv.style.display = 'none';
+}
+
+function dumpData(){
+	//printData();
+	saved.sort(function(a, b){
+		return a.timestamp - b.timestamp;
+	});
+	var start = saved[0].timestamp;
+	var raw_coords = saved.map(function(d){
+		var time = d.timestamp - start;
+		return {
+			timestamp: time,
+			x: d.x,
+			y: d.y,
+			width: d.width,
+			height: d.height
+		};
+	});
+	var brush_coords = calculateBrushCoordinates(raw_coords);
+	console.log(brush_coords);
+	console.log('as it were');
 }
 
 colors.on('track', function(event){
@@ -135,5 +156,6 @@ colors.on('track', function(event){
 task = tracking.track('#camera', colors, {camera: true});
 
 window.onerror = function(event){
+	console.error(event);
 	alert(event);
 }
