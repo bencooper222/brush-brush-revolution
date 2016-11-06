@@ -72,8 +72,6 @@ function colorValidatorFactory(r, g, b, tolerance){
 	return validator;
 }
 
-// rgb(142,184,81)
-
 function registerColorV(name, r, g, b, t){
 	tracking.ColorTracker.registerColor(name, colorValidatorFactory(r, g, b, t));
 }
