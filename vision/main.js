@@ -74,8 +74,28 @@ function printData(){
 		var time = d.timestamp - start;
 		return [time, d.x, d.y, d.width, d.height].join(',');
 	});
-	var toPrint = '';
-	//['timestamp', 'x', 'y', 'width', 'height'].join(',');
+	var toPrint = lines.length + ' data points:';
+	toPrint += '\n' + ['timestamp', 'x', 'y', 'width', 'height'].join(',');
+	for(var i = 0; i < lines.length; i++){
+		toPrint += '\n' + lines[i];
+	}
+	output.value = toPrint;
+	screenDiv.style.display = 'none';
+}
+
+var colorStream = [];
+
+function printColorStream(){
+	colorStream.sort(function(a, b){
+		return a.timestamp - b.timestamp;
+	});
+	var start = colorStream[0].timestamp;
+	var lines = colorStream.map(function(d){
+		var time = d.timestamp - start;
+		return [time, d.color, d.last, d.current_streak, d.last_streak, d.diff, d.didx].join(',');
+	});
+	var toPrint = lines.length + ' data points:';
+	toPrint += '\n' + ['timestamp', 'current_color', 'last_color', 'current_streak', 'last_streak', 'color_distance', 'color_index'].join(',');
 	for(var i = 0; i < lines.length; i++){
 		toPrint += '\n' + lines[i];
 	}
@@ -122,9 +142,11 @@ function launchColorTracker(r, g, b, t){
 	colors.on('track', function(event){
 		if(event.data.length === 0){
 			//console.log('No colors detected.');
+			document.body.style.background = 'white';
 			//canvas.style.background = 'rgba(0,0,0,0.25)';
 		}
 		else{
+			document.body.style.background = 'black';
 			//canvas.style.background = 'rgba(0,0,0,0.00)';
 			event.data.forEach(function(rect){
 				rect.timestamp = Date.now();
@@ -141,6 +163,7 @@ function launchColorTracker(r, g, b, t){
 var colorButton = document.getElementById('color');
 
 function chooseColor(){
+	printColorStream();
 	var trackerColor = colorButton.style.background;
 	console.log(trackerColor);
 	task.stop();
@@ -148,7 +171,7 @@ function chooseColor(){
 	colorButton.style.background = trackerColor;
 	clearCanvas();
 	var c = cStrToArr(trackerColor);
-	launchColorTracker(c[0], c[1], c[2], 20);
+	//launchColorTracker(c[0], c[1], c[2], 10);
 }
 
 function launchBrushTracker(){
@@ -226,14 +249,17 @@ function launchBrushTracker(){
 					lastStreak = SIM_SEQ;
 					SIM_SEQ = 0;
 				}
-				this.emit('track', {
+				var colorData = {
+					timestamp: Date.now(),
 					color: finalStr,
 					last: LAST_COLOR,
 					diff: d,
 					didx: d / COLOR_DIFF_MAX,
 					current_streak: SIM_SEQ,
 					last_streak: lastStreak
-				});
+				};
+				colorStream.push(colorData);
+				this.emit('track', colorData);
 			}
 
 			LAST_COLOR = finalStr;
@@ -247,8 +273,8 @@ function launchBrushTracker(){
 	var lastColor = false;
 
 	brushTracker.on('track', function(event){
-		//console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
-		//console.log(event);
+		console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
+		console.log(event);
 	});
 
 	task = tracking.track('#camera', brushTracker, {camera: true});
