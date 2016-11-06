@@ -182,7 +182,7 @@ function launchBrushTracker(){
 			var size = 30;
 			var cbtr = {
 				x: Math.floor((width - size) / 2),
-				y: Math.floor((height - size) / 2),
+				y: 2 * (Math.floor((height - size) / 3)),
 				width: size,
 				height: size
 			};
