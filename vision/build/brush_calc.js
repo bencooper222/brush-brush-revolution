@@ -65,7 +65,7 @@ function computeAcceleration(v0, v, t) {
         return avg;
     }
     else{
-        console.error('Out of bounds exception you piece of shit.');
+        //console.error('Out of bounds exception you piece of shit.');
         return false;
     }
 }*/
@@ -74,7 +74,7 @@ function computeAcceleration(v0, v, t) {
 //     var period = 0;
 //     for (i = 0; i < delta_pos.length - 2; i++) {
 //         var avg3 = (delta_pos[i] + delta_pos[i+1] + delta_pos[i+2]) / 3;
-//         console.log(avg3);
+//         //console.log(avg3);
 //         if (avg3 > MIN_THRESHOLD && avg3 < MAX_THRESHOLD) {
 //             period += 1;
 //         }
@@ -97,7 +97,7 @@ function computeAcceleration(v0, v, t) {
 //         }
 //         else {
 //             rigor = Math.abs(K * delta[i] * period * coordinates[i].v);
-//             console.log(K, delta[i], period, coordinates[i].v);
+//             //console.log(K, delta[i], period, coordinates[i].v);
 //         }
 //         delta_r.push(rigor); 
 //     }
@@ -160,7 +160,7 @@ function calculateBrushCoordinates (raw_coordinates) {
             var x = adjusted_coordinates[i].x; 
             var y = adjusted_coordinates[i].y; 
             var z = computeDeltaZ(w0,h0,w1,h1);
-            var t0 = adjusted_coordinates[i - 1].timestamp; 
+            var t0 = adjusted_coordinates[i].timestamp; 
             var t = computeTimeDelta(t0, adjusted_coordinates[i].timestamp);
             var v = computeVelocity(x0,y0,z0,x,y,z,t);
             var a = computeAcceleration(final_coordinates[i - 1].v, v, t); 
@@ -183,4 +183,115 @@ function calculateBrushCoordinates (raw_coordinates) {
     // }
 
     return final_coordinates; 
+}
+
+function normalize_distributions(coordinates) {
+    var origin = coordinates.slice(5, -1); 
+    var normalizer = [origin[0].x, origin[0].y];
+
+    origin[0].t = 0; 
+    for (i = 0; i < origin.length; i++) {
+        origin[i].x -= normalizer[0]; 
+        origin[i].y -= normalizer[1]; 
+    } 
+
+    return origin 
+}
+
+function find_quadrant(obj) { 
+    var normalized = normalize_distributions([obj]); 
+    var quadrant; 
+    if (normalized[0].x < 0 && normalized[0].y < 0) {
+        quadrant = "top left"; 
+    }
+    else if (normalized[0].x > 0 && normalized[0].y > 0) {
+        quadrant = "top right"; 
+    }
+    else if (normalized[0].x < 0 && normalized[0].y < 0) {
+        quadrant = "bottom left"; 
+    }
+    else {
+        quadrant = "bottom right";
+    }
+
+    return quadrant 
+}
+
+function ideal_time_index_score(coordinates) {
+    delta = coordinates[coordinates.length-1].t0 - coordinates[0].t0; 
+    scalar = delta / 12000.0; 
+    return parseInt(scalar * 10.0); 
+}
+
+function ideal_angle_index_score(coordinates) {
+    var pairs = []; 
+    for (i = 0; i < coordinates.length; i++) {
+         var _xy = []; 
+        _xy.push(coordinates[i].x); 
+        _xy.push(coordinates[i].y);
+        pairs.push(_xy); 
+    }
+    
+    var result = regression('linear', pairs); 
+    var slope = result.equation[0];
+
+    var theta = (Math.atan(slope) * 180/Math.PI) % 90.0;
+
+    var error = Math.abs((theta - 45) / 45.0);
+
+    return parseInt(10.0 - (10*error))
+}
+
+function ideal_quadrant_index_score(coordinates) {
+    var normalized_distribution = normalize_distributions(coordinates); 
+    var q1 = [0]; 
+    var q2 = [0]; 
+    var q3 = [0]; 
+    var q4 = [0]; 
+
+    for (i = 0; i < normalized_distribution.length; i++) {
+        if (normalized_distribution[i].x < 0 && normalized_distribution[i].y < 0) {
+            q1.push(normalized_distribution[i].t); 
+        }
+        else if (normalized_distribution[i].x > 0 && normalized_distribution[i].y > 0) {
+            q2.push(normalized_distribution[i].t); 
+        }
+        else if (normalized_distribution[i].x < 0 && normalized_distribution[i].y < 0) {
+            q3.push(normalized_distribution[i].t); 
+        }
+        else {
+            q4.push(normalized_distribution[i].t);
+        }   
+    }
+
+    //console.log(q1, q2, q3, q4);
+
+    var s1 = 10 - (10 * Math.abs((((q1.reduce(function(a, b){return a + b;})) % 30) - 30) / 30)) || 0;
+    var s2 = 10 - (10 * Math.abs((((q2.reduce(function(a, b){return a + b;})) % 30) - 30) / 30)) || 0;
+    var s3 = 10 - (10 * Math.abs((((q3.reduce(function(a, b){return a + b;})) % 30) - 30) / 30)) || 0;
+    var s4 = 10 - (10 * Math.abs((((q4.reduce(function(a, b){return a + b;})) % 30) - 30) / 30)) || 0;
+
+    //console.log(s1, s2, s3, s4);
+    var watch = [s1, s2, s3, s4];
+    var high = watch[0];
+    var idx = 0;
+    for(var w = 0; w < watch.length; w++){
+        if(watch[w] < high){
+            high = watch[w];
+            idx = w;
+        }
+    }
+    window.SAD_QUAD = idx;
+
+    return parseInt((s1+s2+s3+s4)/4)
+}
+
+function idealBehaviorScore(coordinates) {
+    var time_index = ideal_time_index_score(coordinates); 
+    var angle_index = ideal_angle_index_score(coordinates); 
+    var quadrant_index = ideal_quadrant_index_score(coordinates); 
+
+    //console.log(time_index, angle_index, quadrant_index)
+
+    return parseFloat((time_index + angle_index + quadrant_index) / 3);
 }
