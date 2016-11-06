@@ -109,6 +109,8 @@ function dumpData(){
 	}
 }
 
+var lastRect = false;
+
 function launchColorTracker(r, g, b, t){
 	ctx.strokeStyle = 'yellow';
 	registerColorV('tracker', r, g, b, t);
@@ -119,13 +121,24 @@ function launchColorTracker(r, g, b, t){
 		if(event.data.length === 0){
 			//document.body.style.background = 'white';
 			canvas.style.background = 'rgba(0,0,0,0.50)';
+			if(lastRect){
+				drawRect({
+					x: rect.x + 1,
+					y: rect.y + 1,
+					height: rect.height + 2,
+					width: rect.width - 2
+				});
+			}
 		}
 		else{
 			//document.body.style.background = 'black';
 			canvas.style.background = 'rgba(0,0,0,0.00)';
 			event.data.forEach(function(rect){
+				lastRect = rect;
 				rect.timestamp = Date.now();
 				drawRect(rect);
+				/*var corners = tracking.Fast.findCorners(raw, width, height);
+				console.log(corners);*/
 				saveRect(rect);
 			});
 		}
@@ -243,6 +256,7 @@ function launchBrushTracker(){
 	var brushTracker = new tracking.BrushTracker();
 
 	var lastColor = false;
+	var cStream = [];
 
 	brushTracker.on('track', function(event){
 		if(event.last_streak && CALIBRATING){
