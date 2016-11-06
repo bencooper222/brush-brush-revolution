@@ -123,10 +123,10 @@ function launchColorTracker(r, g, b, t){
 			canvas.style.background = 'rgba(0,0,0,0.50)';
 			if(lastRect){
 				drawRect({
-					x: rect.x + 1,
-					y: rect.y + 1,
-					height: rect.height + 2,
-					width: rect.width - 2
+					x: lastRect.x + 1,
+					y: lastRect.y + 1,
+					height: lastRect.height + 2,
+					width: lastRect.width - 2
 				});
 			}
 		}
@@ -184,6 +184,7 @@ function launchBrushTracker(){
 				highest.value = m;
 			}
 		}
+		//console.log(counts)
 		return highest.value;
 	}
 
@@ -192,10 +193,10 @@ function launchBrushTracker(){
 
 	BrushTracker.prototype.track = function(raw, width, height){
 		if(SCALED && CALIBRATING){
-			var size = 30;
+			var size = 50;
 			var cbtr = {
 				x: Math.floor((width - size) / 2),
-				y: 2 * (Math.floor((height - size) / 3)),
+				y: Math.floor(2*((height - size) / 3)),
 				width: size,
 				height: size
 			};
@@ -209,45 +210,56 @@ function launchBrushTracker(){
 				for(var x = cbtr.x; x < (cbtr.x + cbtr.width); x++){
 					var i = 4 * x * y;
 					var rgb = [raw[i], raw[i+1], raw[i+2]];
-					pixels.push(rgb);
-					rgbStr.push(rgb.join(','));
-					rgbStack[0].push(raw[i]);
-					rgbStack[1].push(raw[i+1]);
-					rgbStack[2].push(raw[i+2]);
+					if(shadeFilter(rgb)){
+						pixels.push(rgb);
+						rgbStr.push(rgb.join(','));
+						rgbStack[0].push(raw[i]);
+						rgbStack[1].push(raw[i+1]);
+						rgbStack[2].push(raw[i+2]);
+					}
 				}
 			}
 
-			var modeRGB = [mode(rgbStack[0]), mode(rgbStack[0]), mode(rgbStack[0])];
+			var modeRGB = [mode(rgbStack[0]), mode(rgbStack[1]), mode(rgbStack[2])];
 			var modePix = mode(rgbStr);
 
 			//console.log('%c Average Color', 'background: rgba(' + modePix + ',1)');
-			var finalStr = 'rgba(' + modePix + ',1)';
+			//var finalStr = 'rgba(' + modeRGB + ',1)';
+			var finalStr = cArrToStr(modeRGB);
+			
+			console.log(pixels.length);
+			console.log('Integrate from y = ' + cbtr.y + ' to ' + y + ': Delta(y) = ' + (y - cbtr.y));
+			console.log('Integrate from x = ' + cbtr.x + ' to ' + x + ': Delta(x) = ' + (x - cbtr.x));
+			console.color(finalStr, 'Color Integral')
+
+
 			document.body.style.background = finalStr;
 			colorButton.style.background = finalStr;
 			drawRect(cbtr, finalStr);
 
-			if(LAST_COLOR){
-				var lastStreak = false;
-				var d = colorDiff(cStrToArr(finalStr), cStrToArr(LAST_COLOR));
-				if(d === 0){
-					SIM_SEQ++;
+			if(shadeFilter(cStrToArr(finalStr))){
+				if(LAST_COLOR){
+					var lastStreak = false;
+					var d = colorDiff(cStrToArr(finalStr), cStrToArr(LAST_COLOR));
+					if(d === 0){
+						SIM_SEQ++;
+					}
+					else{
+						lastStreak = SIM_SEQ;
+						SIM_SEQ = 0;
+					}
+					this.emit('track', {
+						timestamp: Date.now(),
+						color: finalStr,
+						last: LAST_COLOR,
+						diff: d,
+						didx: d / COLOR_DIFF_MAX,
+						current_streak: SIM_SEQ,
+						last_streak: lastStreak
+					});
 				}
-				else{
-					lastStreak = SIM_SEQ;
-					SIM_SEQ = 0;
-				}
-				this.emit('track', {
-					timestamp: Date.now(),
-					color: finalStr,
-					last: LAST_COLOR,
-					diff: d,
-					didx: d / COLOR_DIFF_MAX,
-					current_streak: SIM_SEQ,
-					last_streak: lastStreak
-				});
+				LAST_COLOR = finalStr;
 			}
-
-			LAST_COLOR = finalStr;
 		}
 	}
 
@@ -257,16 +269,41 @@ function launchBrushTracker(){
 
 	var lastColor = false;
 	var cStream = [];
+	var cMap = {};
 
 	brushTracker.on('track', function(event){
 		if(event.last_streak && CALIBRATING){
-			var whiteDiff = colorDiff(cStrToArr(event.color), [255, 255, 255]);
-			if(event.last_streak > 8 && whiteDiff > 70){
-				/*console.log(event.last_streak + ' color streak!');
-				console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
-				console.log(event.color);*/
-				chooseColor();				
+			/*var rgbKey = cRoundToFive(cStrToArr(event.color)).join('-');
+			cMap[rgbKey] = cMap[rgbKey] + 1 || 1;*/
+			var rounded = cArrToStr(cRoundToFive(cStrToArr(event.color)))
+			/*console.log('%c ' + event.color, 'background:' + event.color);
+			console.log('ROUNDS: %c ' + rounded, 'background:' + rounded);*/
+			var rgbKey = cStrToArr(rounded).join('-');
+			cMap[rgbKey] = cMap[rgbKey] + 1 || 1;
+			if(cMap[rgbKey] > 3){
+				console.log('ROUNDS: %c ' + rounded, 'background:' + rounded);
 			}
+			/*cStream.push(event);
+			if(cStream.length > 6){
+				var cands = cStream.slice(cStream.length-6, cStream.length-1);
+				var sumDiff = cands.reduce(function(a, b, i){
+					console.log('%c ', 'background:' + b.color);
+					if(i === 0){
+						return a.diff + b.diff;
+					}
+					else{
+						return a + b.diff;
+					}
+				});
+				console.log(sumDiff);
+			}*/
+
+			/*console.log(event.last_streak + ' color streak!');
+			console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
+			console.log(event.color);*/
+			
+			//chooseColor();
+			//lastColor = event.color;
 		}
 	});
 
