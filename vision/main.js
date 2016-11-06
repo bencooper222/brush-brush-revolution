@@ -3,7 +3,6 @@ var screenDiv = document.getElementById('screen');
 var video = document.getElementById('camera');
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
-ctx.strokeStyle = 'yellow';
 
 var task = null;
 
@@ -11,11 +10,15 @@ function clearCanvas(){
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-function drawRect(r){
+function drawRect(r, fill){
 	ctx.beginPath();
 	clearCanvas();
 	ctx.rect(r.x, r.y, r.width, r.height);
 	ctx.stroke();
+	if(fill){
+		ctx.fillStyle = fill;
+		ctx.fill();
+	}
 	ctx.closePath();
 }
 
@@ -28,8 +31,10 @@ function flipHorizontal(domObj){
 flipHorizontal(video);
 flipHorizontal(canvas);
 
+var SCALED = false;
+
 var adjustScreenSize = function(){
-	task.stop();
+	//task.stop();
 	var h = video.videoHeight;
 	var w = video.videoWidth;
 	video.width = w;
@@ -39,52 +44,14 @@ var adjustScreenSize = function(){
 	screenDiv.style.width = w + 'px';
 	screenDiv.style.height = h + 'px';
 	screenDiv.style.marginLeft = (w/-2) + 'px';
-	clearCanvas();
+	SCALED = true;
+	/*clearCanvas();
 	ctx = canvas.getContext('2d');
-	ctx.strokeStyle = 'yellow';
-	task = tracking.track('#camera', colors, {camera: true});
-	//task.stop(); //
+	launchColorTracker();*/
 	video.removeEventListener('playing', adjustScreenSize, false);
 }
 
 video.addEventListener('playing', adjustScreenSize, false);
-
-// Blue Cap: rgb(50,86,231)
-// Pink Arm: rgb(243,168,172)
-// Green Point: rgb(133,197,179)
-// rgb(26,119,107)
-// rgb(242,142,147)
-// Blue Tape: rgb(20,43,76)
-
-function colorValidatorFactory(r, g, b, tolerance){
-	var tol = tolerance || 50;
-	var validator = function(ri, gi, bi){
-		var rRange = Math.abs(r - ri) < tol;
-		var gRange = Math.abs(g - gi) < tol;
-		var bRange = Math.abs(b - bi) < tol;
-		if(rRange && gRange && bRange){
-			return true;
-		}
-		else{
-			return false;
-		}
-	}
-	return validator;
-}
-
-function registerColorV(name, r, g, b, t){
-	tracking.ColorTracker.registerColor(name, colorValidatorFactory(r, g, b, t));
-}
-
-//tracking.ColorTracker.registerColor('tape', colorValidatorFactory(142,170,108, 20));
-
-/*registerColorV('t1', 142, 170, 108, 20);
-registerColorV('t2', 142, 184, 81, 20);*/
-
-registerColorV('tracker',174,234,197,20);
-//registerColorV('tracker',37,84,215,20);
-
-var colors = new tracking.ColorTracker(['tracker']);
 
 var saved = [];
 
@@ -116,46 +83,158 @@ function printData(){
 	screenDiv.style.display = 'none';
 }
 
-function dumpData(){
-	//printData();
-	saved.sort(function(a, b){
-		return a.timestamp - b.timestamp;
-	});
-	var start = saved[0].timestamp;
-	var raw_coords = saved.map(function(d){
-		var time = d.timestamp - start;
-		return {
-			timestamp: time,
-			x: d.x,
-			y: d.y,
-			width: d.width,
-			height: d.height
-		};
-	});
-	var brush_coords = calculateBrushCoordinates(raw_coords);
-	console.log(brush_coords);
-	console.log('as it were');
+function endCameraFeed(){
+	task.stop();
+	var trackDiv = document.getElementById('track');
+	document.body.removeChild(trackDiv);
 }
 
-colors.on('track', function(event){
-	if(event.data.length === 0){
-		//console.log('No colors detected.');
-		//canvas.style.background = 'rgba(0,0,0,0.25)';
-	}
-	else{
-		//canvas.style.background = 'rgba(0,0,0,0.00)';
-		event.data.forEach(function(rect){
-			rect.timestamp = Date.now();
-			//console.log(rect);
-			drawRect(rect);
-			saveRect(rect);
+function dumpData(){
+	if(saved.length > 0){
+		printData();
+		saved.sort(function(a, b){
+			return a.timestamp - b.timestamp;
 		});
+		var start = saved[0].timestamp;
+		var raw_coords = saved.map(function(d){
+			var time = d.timestamp - start;
+			return {
+				timestamp: time,
+				x: d.x,
+				y: d.y,
+				width: d.width,
+				height: d.height
+			};
+		});
+		/*var brush_coords = calculateBrushCoordinates(raw_coords);
+		console.log(brush_coords);
+		console.log('as it were');*/
 	}
-});
+}
 
-task = tracking.track('#camera', colors, {camera: true});
+function launchColorTracker(r, g, b, t){
+	ctx.strokeStyle = 'yellow';
+	//registerColorV('tracker',174,234,197,20);
+	registerColorV('tracker', r, g, b, t);
+
+	var colors = new tracking.ColorTracker(['tracker']);
+
+	colors.on('track', function(event){
+		if(event.data.length === 0){
+			//console.log('No colors detected.');
+			//canvas.style.background = 'rgba(0,0,0,0.25)';
+		}
+		else{
+			//canvas.style.background = 'rgba(0,0,0,0.00)';
+			event.data.forEach(function(rect){
+				rect.timestamp = Date.now();
+				//console.log(rect);
+				drawRect(rect);
+				saveRect(rect);
+			});
+		}
+	});
+
+	task = tracking.track('#camera', colors, {camera: true});
+}
+
+var colorButton = document.getElementById('color');
+
+function chooseColor(){
+	var trackerColor = colorButton.style.background;
+	console.log(trackerColor);
+	task.stop();
+	document.body.style.background = trackerColor;
+	colorButton.style.background = trackerColor;
+	clearCanvas();
+	var c = trackerColor.substr(4).replace(')', '').split(', ');
+	launchColorTracker(c[0], c[1], c[2], 20);
+}
+
+function launchBrushTracker(){
+	ctx.strokeStyle = 'red';
+	var BrushTracker = function(){
+		BrushTracker.base(this, 'constructor');
+	}
+
+	tracking.inherits(BrushTracker, tracking.Tracker);
+
+	var LIM_CPRINT = 0;
+
+	function mode(list){
+		var counts = {};
+		for(var i = 0; i < list.length; i++){
+			var n = list[i]
+			counts[n] = counts[n] + 1 || 1;
+		}
+		var highest = {count: 0, value: false};
+		for(var m in counts){
+			if(counts[m] > highest.count){
+				highest.count = counts[m];
+				highest.value = m;
+			}
+		}
+		return highest.value;
+	}
+
+	BrushTracker.prototype.track = function(raw, width, height){
+		if(SCALED){
+			var size = 50;
+			var cbtr = {
+				x: Math.floor((width - size) / 2),
+				y: Math.floor((height - size) / 2),
+				width: size,
+				height: size
+			};
+			drawRect(cbtr);
+
+			var pixels = [];
+			var rgbStr = [];
+			var rgbStack = [[], [], []];
+			var avg = [0, 0, 0];
+			for(var y = cbtr.y; y < (cbtr.y + cbtr.height); y++){
+				for(var x = cbtr.x; x < (cbtr.x + cbtr.width); x++){
+					var i = 4 * x * y;
+					var rgb = [raw[i], raw[i+1], raw[i+2]];
+					pixels.push(rgb);
+					rgbStr.push(rgb.join(','));
+					rgbStack[0].push(raw[i]);
+					rgbStack[1].push(raw[i+1]);
+					rgbStack[2].push(raw[i+2]);
+				}
+			}
+
+			var modeRGB = [mode(rgbStack[0]), mode(rgbStack[0]), mode(rgbStack[0])];
+			var modePix = mode(rgbStr);
+
+			//console.log('%c Average Color', 'background: rgba(' + modePix + ',1)');
+			var finalStr = 'rgba(' + modePix + ',1)';
+			document.body.style.background = finalStr;
+			colorButton.style.background = finalStr;
+			drawRect(cbtr, finalStr);
+
+			//SCALED = false;
+		}
+
+		/*this.emit('track', {
+			// Your results here
+		});*/
+	}
+
+	tracking.BrushTracker = BrushTracker;
+
+	var brushTracker = new tracking.BrushTracker();
+
+	brushTracker.on('track', function(event){
+		//
+	});
+
+	task = tracking.track('#camera', brushTracker, {camera: true});
+}
 
 window.onerror = function(event){
 	console.error(event);
 	alert(event);
 }
+
+launchBrushTracker();
