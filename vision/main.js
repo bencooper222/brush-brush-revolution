@@ -34,7 +34,6 @@ flipHorizontal(canvas);
 var SCALED = false;
 
 var adjustScreenSize = function(){
-	//task.stop();
 	var h = video.videoHeight;
 	var w = video.videoWidth;
 	video.width = w;
@@ -45,9 +44,7 @@ var adjustScreenSize = function(){
 	screenDiv.style.height = h + 'px';
 	screenDiv.style.marginLeft = (w/-2) + 'px';
 	SCALED = true;
-	/*clearCanvas();
-	ctx = canvas.getContext('2d');
-	launchColorTracker();*/
+	clearCanvas();
 	video.removeEventListener('playing', adjustScreenSize, false);
 }
 
@@ -76,26 +73,6 @@ function printData(){
 	});
 	var toPrint = lines.length + ' data points:';
 	toPrint += '\n' + ['timestamp', 'x', 'y', 'width', 'height'].join(',');
-	for(var i = 0; i < lines.length; i++){
-		toPrint += '\n' + lines[i];
-	}
-	output.value = toPrint;
-	screenDiv.style.display = 'none';
-}
-
-var colorStream = [];
-
-function printColorStream(){
-	colorStream.sort(function(a, b){
-		return a.timestamp - b.timestamp;
-	});
-	var start = colorStream[0].timestamp;
-	var lines = colorStream.map(function(d){
-		var time = d.timestamp - start;
-		return [time, d.color, d.last, d.current_streak, d.last_streak, d.diff, d.didx].join(',');
-	});
-	var toPrint = lines.length + ' data points:';
-	toPrint += '\n' + ['timestamp', 'current_color', 'last_color', 'current_streak', 'last_streak', 'color_distance', 'color_index'].join(',');
 	for(var i = 0; i < lines.length; i++){
 		toPrint += '\n' + lines[i];
 	}
@@ -134,14 +111,12 @@ function dumpData(){
 
 function launchColorTracker(r, g, b, t){
 	ctx.strokeStyle = 'yellow';
-	//registerColorV('tracker',174,234,197,20);
 	registerColorV('tracker', r, g, b, t);
 
 	var colors = new tracking.ColorTracker(['tracker']);
 
 	colors.on('track', function(event){
 		if(event.data.length === 0){
-			//console.log('No colors detected.');
 			document.body.style.background = 'white';
 			//canvas.style.background = 'rgba(0,0,0,0.25)';
 		}
@@ -150,7 +125,6 @@ function launchColorTracker(r, g, b, t){
 			//canvas.style.background = 'rgba(0,0,0,0.00)';
 			event.data.forEach(function(rect){
 				rect.timestamp = Date.now();
-				//console.log(rect);
 				drawRect(rect);
 				saveRect(rect);
 			});
@@ -161,9 +135,10 @@ function launchColorTracker(r, g, b, t){
 }
 
 var colorButton = document.getElementById('color');
+var CALIBRATING = true;
 
 function chooseColor(){
-	printColorStream();
+	CALIBRATING = false;
 	var trackerColor = colorButton.style.background;
 	console.log(trackerColor);
 	task.stop();
@@ -171,7 +146,7 @@ function chooseColor(){
 	colorButton.style.background = trackerColor;
 	clearCanvas();
 	var c = cStrToArr(trackerColor);
-	//launchColorTracker(c[0], c[1], c[2], 10);
+	launchColorTracker(c[0], c[1], c[2], 20);
 }
 
 function launchBrushTracker(){
@@ -204,7 +179,7 @@ function launchBrushTracker(){
 	var SIM_SEQ = 0;
 
 	BrushTracker.prototype.track = function(raw, width, height){
-		if(SCALED){
+		if(SCALED && CALIBRATING){
 			var size = 50;
 			var cbtr = {
 				x: Math.floor((width - size) / 2),
@@ -249,7 +224,7 @@ function launchBrushTracker(){
 					lastStreak = SIM_SEQ;
 					SIM_SEQ = 0;
 				}
-				var colorData = {
+				this.emit('track', {
 					timestamp: Date.now(),
 					color: finalStr,
 					last: LAST_COLOR,
@@ -257,9 +232,7 @@ function launchBrushTracker(){
 					didx: d / COLOR_DIFF_MAX,
 					current_streak: SIM_SEQ,
 					last_streak: lastStreak
-				};
-				colorStream.push(colorData);
-				this.emit('track', colorData);
+				});
 			}
 
 			LAST_COLOR = finalStr;
@@ -273,8 +246,14 @@ function launchBrushTracker(){
 	var lastColor = false;
 
 	brushTracker.on('track', function(event){
-		console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
-		console.log(event);
+		if(event.last_streak && CALIBRATING){
+			if(event.last_streak > 10){
+				console.log(event.last_streak + ' color streak!');
+				console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
+				console.log(event.color);
+				chooseColor();				
+			}
+		}
 	});
 
 	task = tracking.track('#camera', brushTracker, {camera: true});
