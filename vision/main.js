@@ -117,12 +117,12 @@ function launchColorTracker(r, g, b, t){
 
 	colors.on('track', function(event){
 		if(event.data.length === 0){
-			document.body.style.background = 'white';
-			//canvas.style.background = 'rgba(0,0,0,0.25)';
+			//document.body.style.background = 'white';
+			canvas.style.background = 'rgba(0,0,0,0.50)';
 		}
 		else{
-			document.body.style.background = 'black';
-			//canvas.style.background = 'rgba(0,0,0,0.00)';
+			//document.body.style.background = 'black';
+			canvas.style.background = 'rgba(0,0,0,0.00)';
 			event.data.forEach(function(rect){
 				rect.timestamp = Date.now();
 				drawRect(rect);
@@ -140,7 +140,6 @@ var CALIBRATING = true;
 function chooseColor(){
 	CALIBRATING = false;
 	var trackerColor = colorButton.style.background;
-	console.log(trackerColor);
 	task.stop();
 	document.body.style.background = trackerColor;
 	colorButton.style.background = trackerColor;
@@ -180,7 +179,7 @@ function launchBrushTracker(){
 
 	BrushTracker.prototype.track = function(raw, width, height){
 		if(SCALED && CALIBRATING){
-			var size = 50;
+			var size = 30;
 			var cbtr = {
 				x: Math.floor((width - size) / 2),
 				y: Math.floor((height - size) / 2),
@@ -247,10 +246,11 @@ function launchBrushTracker(){
 
 	brushTracker.on('track', function(event){
 		if(event.last_streak && CALIBRATING){
-			if(event.last_streak > 10){
-				console.log(event.last_streak + ' color streak!');
+			var whiteDiff = colorDiff(cStrToArr(event.color), [255, 255, 255]);
+			if(event.last_streak > 8 && whiteDiff > 70){
+				/*console.log(event.last_streak + ' color streak!');
 				console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
-				console.log(event.color);
+				console.log(event.color);*/
 				chooseColor();				
 			}
 		}
