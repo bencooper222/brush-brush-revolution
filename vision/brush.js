@@ -42,8 +42,7 @@ var adjustScreenSize = function(){
 	clearCanvas();
 	ctx = canvas.getContext('2d');
 	ctx.strokeStyle = 'yellow';
-	task = tracking.track('#camera', colors, {camera: true});
-	//task.stop(); //
+	task = tracking.track('#camera', brushTracker, {camera: true});
 	video.removeEventListener('playing', adjustScreenSize, false);
 }
 
@@ -80,13 +79,10 @@ function registerColorV(name, r, g, b, t){
 
 //tracking.ColorTracker.registerColor('tape', colorValidatorFactory(142,170,108, 20));
 
-/*registerColorV('t1', 142, 170, 108, 20);
-registerColorV('t2', 142, 184, 81, 20);*/
+registerColorV('t1', 142, 170, 108, 20);
+registerColorV('t2', 142, 184, 81, 20);
 
-registerColorV('tracker',174,234,197,20);
-//registerColorV('tracker',37,84,215,20);
-
-var colors = new tracking.ColorTracker(['tracker']);
+var colors = new tracking.ColorTracker(['t1', 't2']);
 
 var saved = [];
 
@@ -134,7 +130,85 @@ colors.on('track', function(event){
 	}
 });
 
-task = tracking.track('#camera', colors, {camera: true});
+//task = tracking.track('#camera', colors, {camera: true});
+
+function componentToHex(c){
+	var hex = c.toString(16);
+	return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b){
+	return "" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function hexToRgb(hex){
+	var bigint = parseInt(hex, 16);
+	var r = (bigint >> 16) & 255;
+	var g = (bigint >> 8) & 255;
+	var b = bigint & 255;
+	return r + "," + g + "," + b;
+}
+
+var COLOR_DIFF_MAX = Math.sqrt(3 * Math.pow(255, 2));
+
+function colorDiff(c1, c2){
+	var dR = c2[0] - c1[0];
+	console.log(c2[0], c1[0]);
+	console.log(c2[1], c1[1]);
+	console.log(c2[2], c1[2]);
+	var dG = c2[1] - c1[1];
+	var dB = c2[2] - c1[2];
+	var d = Math.sqrt(Math.pow(dR, 2) + Math.pow(dG, 2) + Math.pow(dB, 2));
+	return d;
+}
+
+var BrushTracker = function(){
+	BrushTracker.base(this, 'constructor');
+}
+tracking.inherits(BrushTracker, tracking.Tracker);
+
+var LIM_CPRINT = 0;
+
+BrushTracker.prototype.track = function(raw, width, height){
+	// 307200 pixels
+	var pixels = [];
+	var c = [null, null, null, null];
+	for(var i = 0; i < raw.length; i++){
+		var idx = i%4;
+		c[idx] = raw[i];
+		if((i+1)%4 === 0 && LIM_CPRINT < 100){
+			//console.log('%c      ', 'background:rgba(' + c.join(',') + ');');
+			LIM_CPRINT++;
+			pixels.push(rgbToHex(c[0], c[1], c[2]));
+		}
+	}
+
+	pixels.sort(function(a, b){
+		return parseInt(a, 16) - parseInt(b, 16);
+	});
+
+	pixels = pixels.map(function(hex){
+		return hexToRgb(hex);
+	});
+
+	for(var u = 0; u < pixels.length; u++){
+		console.log('%c      ', 'background:rgba(' + pixels[u] + ',1);');
+	}
+
+	this.emit('track', {
+		// Your results here
+	});
+}
+
+tracking.BrushTracker = BrushTracker;
+
+var brushTracker = new tracking.BrushTracker();
+
+brushTracker.on('track', function(event){
+	//
+});
+
+task = tracking.track('#camera', brushTracker, {camera: true});
 
 window.onerror = function(event){
 	alert(event);
