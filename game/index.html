@@ -12,11 +12,13 @@
 </head>
 
 <body>
+    <a onclick="start()" class="myButton">LEGGO</a>
+    <input id="keyPress" onkeydown="playGame(event)">
+    <div id="gameContainer">
+        <img src="visual-assets/left-arrow-grey.png" class="left down target">
+        <img src="visual-assets/right-arrow-grey.png" class="right down target">
 
-
-    <img src="visual-assets/left-arrow-grey.png" class="left down target">
-    <img src="visual-assets/right-arrow-grey.png" class="right down target">
-
+    </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>

@@ -17,15 +17,22 @@ var gameView = Stapes.subclass({
         this.right = document.getElementsByClassName("right down target")[0];
         this.model = model;
 
-        this.arrows = setUpArrows("instructions/sample_instructions.txt");
+        this.arrows = [];
+
+
+        this.on('start', function() { // redefine arrows here
+
+            setUpArrows("instructions/sample_instructions.txt");
+        });
 
 
         this.on('left', function() {
 
             var near = nearest(this.arrows, true);
             score += near[1];
-            flash(this.arrows[near[0]]);
-
+            black(this.arrows[near[0]]);
+            this.emit('delete', this.arrows[near[0]]);
+            console.log(this.arrows[near[0]]);
             console.log("You added " + near[1] + " points to your score which is now: " + score);
         });
 
@@ -33,24 +40,17 @@ var gameView = Stapes.subclass({
 
             var near = nearest(this.arrows, false);
             score += near[1];
-            flash(this.arrows[near[0]]);
-
+            black(this.arrows[near[0]]);
+            this.emit('delete', this.arrows[near[0]]);
+            console.log(near[0]);
             console.log("You added " + near[1] + " points to your score which is now: " + score);
         });
 
 
-        this.on('delete', function(id) {
-            var toDelete;
-            var i = 0;
-            this.arrows.forEach(function(arrow) {
-                if (arrow.id = id) {
-                    toDelete = i;
-                }
-                i++;
-            })
-
-            this.arrows.splice(i, 1);
-
+        this.on('delete', function(i) {
+            //            this.arrows[i].hidden = true;
+            //this.arrows.splice(i, 1);
+            this.arrows[i] = 0;
         });
 
 
@@ -74,16 +74,18 @@ var gameController = Stapes.subclass({
     'RIGHT': function() {
 
         this.view.emit('right');
+    },
+
+    'START': function() {
+        this.view.emit('start');
     }
 });
 
 var controller = new gameController();
 
-function flash(dom) {
+function black(dom) {
     dom.style.backgroundColor = "black";
-    setTimeout(function() {
-        dom.style.backgroundColor = "white";
-    }, 200)
+
 }
 
 function nearest(arrows, left) { //true if left, false if right
@@ -108,7 +110,7 @@ function nearest(arrows, left) { //true if left, false if right
     return nearest;
 }
 
-function moveDown(nodeId, func) { // px per second
+function moveDown(nodeId) { // px per second
     console.log("Node:  " + nodeId);
     var node = $("#" + nodeId);
     node.animate({
@@ -117,8 +119,8 @@ function moveDown(nodeId, func) { // px per second
 
     setTimeout(function() {
         node.remove();
-        //controller.view.emit("delete", nodeId);
-    }, 5050);
+        controller.view.emit("delete", nodeId);
+    }, 5025);
 }
 
 
@@ -131,6 +133,21 @@ function moveLeArrows(arrows, times) {
         }, times[i]);
         i++;
     });
+}
+
+function playGame(event) {
+    console.log(event.key);
+    if (event.key == "ArrowLeft") {
+        controller.LEFT();
+    } else {
+        controller.RIGHT();
+    }
+}
+
+
+function start() { // power rangers, roll out!
+    controller.START();
+    document.getElementById("keyPress").focus();
 }
 
 function setUpArrows(file) { // set up a bunch of timeout things
@@ -150,6 +167,8 @@ function setUpArrows(file) { // set up a bunch of timeout things
         if (lineArray[1] == 0) {
             arrow.className = "left";
             arrow.src = "visual-assets/left-arrow-green.png";
+
+
         } else {
             arrow.className = "right";
             arrow.src = "visual-assets/right-arrow-green.png";
@@ -159,15 +178,15 @@ function setUpArrows(file) { // set up a bunch of timeout things
         document.body.appendChild(arrow);
 
         //    setTime
-        arrows[i] = arrow;
+        controller.view.arrows[i] = arrow;
         times[i] = lineArray[0] * 1000;
         id++;
 
     }
 
-    moveLeArrows(arrows, times);
+    moveLeArrows(controller.view.arrows, times);
 
-    return arrows;
+
 }
 
 
