@@ -3,93 +3,27 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>title</title>
+    <title>Floss Floss Hero</title>
     <link rel="stylesheet" href="style.css" type="text/css">
-    <script src="enchant.min.js"></script>
+    <script src="stapes.min.js"></script>
+
+
 
 </head>
 
 <body>
-    <script>
-        enchant(); // initialize
-        var game = new Core(320, 320);
-        game.preload('visual-assets/chara1.png', 'visual-assets/icon0.png'); // preload image
-        game.fps = 20;
+    <a onclick="start()" class="myButton">LEGGO</a>
+    <input id="keyPress" onkeydown="playGame(event)">
+    <div id="gameContainer">
+        <img src="visual-assets/left-arrow-grey.png" class="left down target">
+        <img src="visual-assets/right-arrow-grey.png" class="right down target">
 
-        game.onload = function() {
-            // make new class for player
-            var Player = enchant.Class.create(enchant.Sprite, {
-                initialize: function() {
-                    enchant.Sprite.call(this, 32, 32);
-                    this.image = game.assets['visual-assets/chara1.png'];
-                    this.frame = 5; // set image data
-                    game.rootScene.addChild(this); // add to canvas
-                }
-            });
+    </div>
 
-            // make new class for apple
-            var Apple = enchant.Class.create(enchant.Sprite, {
-                initialize: function() {
-                    enchant.Sprite.call(this, 16, 16);
-                    this.image = game.assets['visual-assets/icon0.png']; // set image
-                    this.moveTo(16, player.y + 8); // move to the position
-                    this.tl.moveBy(320, 0, 30); // set movement
-                    this.frame = 15; // set image data
-                    game.rootScene.addChild(this); // add to canvas
-                }
-            });
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 
-            // make new class for enemy
-            var Enemy = enchant.Class.create(enchant.Sprite, {
-                initialize: function() {
-                    enchant.Sprite.call(this, 32, 32);
-                    this.image = game.assets['visual-assets/chara1.png']; // set image
-                    this.moveTo(320, Math.floor(Math.random() * 320)); // set position
-                    this.scaleX = -1;
-                    this.tl.moveBy(-360, 0, 160); // set movement
-                    game.rootScene.addChild(this); // canvas
-                }
-            });
-
-            var player = new Player();
-
-            // generate enemy every 60 frames
-            game.rootScene.tl.then(function() {
-                var enemy = new Enemy();
-            }).delay(30).loop(); // wait 60 frames and loop it!
-
-            // add event listener (called when click/touch started)
-            game.rootScene.on('touchstart', function(evt) {
-                player.y = evt.localY; // set position to touch-y position
-                var apple = new Apple();
-            });
-
-            // add event listener (called when click/touch moved)
-            game.rootScene.on('touchmove', function(evt) {
-                player.y = evt.localY; // set position to touch-y position
-            });
-
-            var score = 0;
-
-            game.rootScene.on('enterframe', function() {
-                var hits = Apple.intersect(Enemy);
-                for (var i = 0, len = hits.length; i < len; i++) {
-                    game.rootScene.removeChild(hits[i][0]);
-                    game.rootScene.removeChild(hits[i][1]);
-                    score++;
-                }
-            });
-
-            player.tl.delay(game.fps * 10).then(function() {
-                alert('game over! score: ' + score);
-                game.stop();
-            });
-        };
-
-        game.start(); // start your game!
-    </script>
-
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+    <script src="script.js"></script>
 </body>
 
 </html>
