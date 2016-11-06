@@ -106,9 +106,9 @@ function dumpData(){
 				height: d.height
 			};
 		});
-		/*var brush_coords = calculateBrushCoordinates(raw_coords);
+		var brush_coords = calculateBrushCoordinates(raw_coords);
 		console.log(brush_coords);
-		console.log('as it were');*/
+		console.log('as it were');
 	}
 }
 
@@ -247,8 +247,8 @@ function launchBrushTracker(){
 	var lastColor = false;
 
 	brushTracker.on('track', function(event){
-		console.log('%c' + event.diff.toFixed(5), 'background:' + event.color + ';color:white;');
-		console.log(event);
+		//console.log('%c ' + event.diff.toFixed(5) + ' ', 'background:' + event.color + ';color:white;');
+		//console.log(event);
 	});
 
 	task = tracking.track('#camera', brushTracker, {camera: true});
