@@ -92,10 +92,10 @@ function printColorStream(){
 	var start = colorStream[0].timestamp;
 	var lines = colorStream.map(function(d){
 		var time = d.timestamp - start;
-		return [time, d.color, d.last, d.current_streak, d.last_streak, d.diff, d.didx].join(',');
+		return [time, d.color, d.last, d.current_streak, d.last_streak, d.diff, d.didx].join('\t');
 	});
 	var toPrint = lines.length + ' data points:';
-	toPrint += '\n' + ['timestamp', 'current_color', 'last_color', 'current_streak', 'last_streak', 'color_distance', 'color_index'].join(',');
+	toPrint += '\n' + ['timestamp', 'current_color', 'last_color', 'current_streak', 'last_streak', 'color_distance', 'color_index'].join('\t');
 	for(var i = 0; i < lines.length; i++){
 		toPrint += '\n' + lines[i];
 	}
